@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "../../lib/utils";
 
 /**
@@ -7,32 +8,55 @@ import { cn } from "../../lib/utils";
  */
 export function Dropdown({ trigger, children, align = "right", className }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const triggerRef = useRef(null);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     const onClick = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (triggerRef.current && !triggerRef.current.contains(e.target)) {
+        setOpen(false);
+      }
     };
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  return (
-    <div className="relative" ref={ref}>
-      <div onClick={() => setOpen((o) => !o)}>{trigger}</div>
-      {open && (
-        <div
-          className={cn(
-            "absolute z-60 mt-2 min-w-48 rounded-2xl border border-line bg-surface p-1.5 shadow-(--shadow-pop) animate-fade-up",
-            align === "right" ? "right-0" : "left-0",
-            className
-          )}
-          onClick={() => setOpen(false)}
-        >
-          {children}
-        </div>
+  useEffect(() => {
+    if (open && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + 8,
+        left: align === "right" ? rect.right : rect.left,
+      });
+    }
+  }, [open, align]);
+
+  const menu = open && (
+    <div
+      className={cn(
+        "fixed z-9999 mt-0 min-w-48 rounded-2xl border border-line bg-surface p-1.5 shadow-(--shadow-pop) animate-fade-up",
+        align === "right" ? "" : "",
+        className
       )}
+      style={{
+        top: `${position.top}px`,
+        [align === "right" ? "right" : "left"]: align === "right" 
+          ? `${window.innerWidth - position.left}px`
+          : `${position.left}px`,
+      }}
+      onClick={() => setOpen(false)}
+    >
+      {children}
     </div>
+  );
+
+  return (
+    <>
+      <div ref={triggerRef} onClick={() => setOpen((o) => !o)}>
+        {trigger}
+      </div>
+      {createPortal(menu, document.body)}
+    </>
   );
 }
 
