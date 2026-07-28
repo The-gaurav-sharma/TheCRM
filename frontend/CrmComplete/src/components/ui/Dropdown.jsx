@@ -9,11 +9,18 @@ import { cn } from "../../lib/utils";
 export function Dropdown({ trigger, children, align = "right", className }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef(null);
+  const menuRef = useRef(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     const onClick = (e) => {
-      if (triggerRef.current && !triggerRef.current.contains(e.target)) {
+      // Close only if click is outside both trigger AND menu
+      if (
+        triggerRef.current &&
+        menuRef.current &&
+        !triggerRef.current.contains(e.target) &&
+        !menuRef.current.contains(e.target)
+      ) {
         setOpen(false);
       }
     };
@@ -33,9 +40,9 @@ export function Dropdown({ trigger, children, align = "right", className }) {
 
   const menu = open && (
     <div
+      ref={menuRef}
       className={cn(
         "fixed z-9999 mt-0 min-w-48 rounded-2xl border border-line bg-surface p-1.5 shadow-(--shadow-pop) animate-fade-up",
-        align === "right" ? "" : "",
         className
       )}
       style={{
@@ -44,7 +51,6 @@ export function Dropdown({ trigger, children, align = "right", className }) {
           ? `${window.innerWidth - position.left}px`
           : `${position.left}px`,
       }}
-      onClick={() => setOpen(false)}
     >
       {children}
     </div>

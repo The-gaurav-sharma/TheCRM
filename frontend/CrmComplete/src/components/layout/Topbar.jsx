@@ -76,8 +76,7 @@ export function Topbar({ onMenuClick }) {
         <input
           placeholder="Search leads, contacts…"
           onClick={() => setSearchOpen(true)}
-          className="h-10 w-full rounded-full border border-line bg-surface pl-10 pr-4 text-sm text-ink placeholder:text-ink-soft/70 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 cursor-pointer"
-          readOnly
+          className="h-10 w-full rounded-full border border-line bg-surface pl-10 pr-4 text-sm text-ink placeholder:text-ink-soft/70 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
         />
       </div>
 
