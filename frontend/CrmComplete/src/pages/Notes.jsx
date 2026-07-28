@@ -83,7 +83,7 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin }) {
   return (
     <div
       className={cn(
-        "break-inside-avoid relative flex flex-col gap-3 overflow-hidden rounded-2xl bg-surface p-5",
+        "break-inside-avoid relative isolate flex flex-col gap-3 overflow-visible rounded-2xl bg-surface p-5",
         "border border-line shadow-(--shadow-card) transition hover:shadow-(--shadow-pop)",
         note.pinned && "ring-1 ring-brand-200"
       )}
@@ -230,7 +230,7 @@ function NoteFormDialog({ open, onClose, note, leads, onSaved }) {
 
         {/* Pinned pill toggle */}
         <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-line bg-surface-muted/40 px-4 py-3 transition hover:bg-surface-muted/70">
-          <div className="relative flex-shrink-0">
+          <div className="relative shrink-0">
             <input type="checkbox" className="peer sr-only" {...register("pinned")} />
             {/* Custom pill */}
             <div className="h-5 w-9 rounded-full bg-line transition peer-checked:bg-brand-500" />

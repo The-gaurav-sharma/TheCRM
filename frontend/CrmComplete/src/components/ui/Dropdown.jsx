@@ -23,7 +23,7 @@ export function Dropdown({ trigger, children, align = "right", className }) {
       {open && (
         <div
           className={cn(
-            "absolute z-40 mt-2 min-w-[12rem] rounded-2xl border border-line bg-surface p-1.5 shadow-[var(--shadow-pop)] animate-fade-up",
+            "absolute z-60 mt-2 min-w-48 rounded-2xl border border-line bg-surface p-1.5 shadow-(--shadow-pop) animate-fade-up",
             align === "right" ? "right-0" : "left-0",
             className
           )}
