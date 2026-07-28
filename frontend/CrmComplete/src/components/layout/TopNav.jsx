@@ -95,7 +95,7 @@ export function TopNav({ onMenuClick }) {
           <Sparkles className="h-5 w-5" />
         </div>
         <span className="hidden font-display text-lg font-bold text-ink sm:block">
-          TTP CRM
+          Atlass CRM
         </span>
       </div>
 

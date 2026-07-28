@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const TOKEN_KEY = "ttp_crm_token";
+export const TOKEN_KEY = "atlass_crm_token";
 
 const baseURL = import.meta.env.VITE_API_URL || "/api";
 
