@@ -1,0 +1,8 @@
+services:
+  - type: static
+    name: thecrm
+    staticPublishPath: ./frontend/CrmComplete/dist
+    buildCommand: cd frontend/CrmComplete && npm install && npm run build
+    routes:
+      - path: /*
+        destination: /index.html
