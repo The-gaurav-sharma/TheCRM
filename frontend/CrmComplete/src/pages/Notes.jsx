@@ -109,7 +109,7 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin }) {
       <div className="flex items-center justify-between gap-2 pt-1">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {entity && (
-            <Badge className="inline-flex items-center gap-1 bg-brand-50 text-brand-700 border-brand-100 text-xs font-medium max-w-[160px] truncate">
+            <Badge className="inline-flex items-center gap-1 bg-brand-50 text-brand-700 border-brand-100 text-xs font-medium max-w-40 truncate">
               <Link2 className="h-3 w-3 shrink-0" />
               <span className="truncate">{entity.name}</span>
             </Badge>
