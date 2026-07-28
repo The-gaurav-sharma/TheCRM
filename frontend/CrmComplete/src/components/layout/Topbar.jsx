@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Search, Bell, Menu, ChevronDown, User, LogOut, X } from "lucide-react";
 import {
   Avatar,
@@ -12,6 +12,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { leadsApi, contactsApi } from "../../lib/services";
+import { checkUpcomingNotifications, formatTimeUntilDue } from "../../lib/notifications";
 
 /* Sticky top navbar: mobile menu toggle, global search, notifications, profile. */
 export function Topbar({ onMenuClick }) {
@@ -20,6 +21,21 @@ export function Topbar({ onMenuClick }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState({ leads: [], contacts: [] });
+  const [notifications, setNotifications] = useState([]);
+
+  // Check for notifications every minute
+  useEffect(() => {
+    const checkNotifications = async () => {
+      const upcomingNotifications = await checkUpcomingNotifications();
+      setNotifications(upcomingNotifications);
+    };
+
+    checkNotifications();
+    const interval = setInterval(checkNotifications, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  const hasNotifications = notifications.length > 0;
 
   const handleSearch = async (query) => {
     setSearchQuery(query);
@@ -88,13 +104,33 @@ export function Topbar({ onMenuClick }) {
               aria-label="Notifications"
             >
               <Bell className="h-4.5 w-4.5" />
-              <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-brand-500 ring-2 ring-surface" />
+              {hasNotifications && (
+                <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-brand-500 ring-2 ring-surface" />
+              )}
             </button>
           }
         >
           <DropdownLabel>Notifications</DropdownLabel>
           <DropdownSeparator />
-          <DropdownItem>No new notifications</DropdownItem>
+          {notifications.length > 0 ? (
+            notifications.map((notif) => (
+              <DropdownItem
+                key={notif.id}
+                onClick={() => navigate("/tasks")}
+                className="text-left"
+              >
+                <div className="flex flex-col gap-1">
+                  <p className="font-medium text-xs">{notif.title}</p>
+                  <p className="text-xs text-ink-soft">{notif.message}</p>
+                  <p className="text-xs text-brand-600">
+                    Due: {formatTimeUntilDue(notif.task.dueDate)}
+                  </p>
+                </div>
+              </DropdownItem>
+            ))
+          ) : (
+            <DropdownItem disabled>No notifications</DropdownItem>
+          )}
         </Dropdown>
 
         <Dropdown
@@ -172,4 +208,5 @@ export function Topbar({ onMenuClick }) {
     </header>
   );
 }
+
 

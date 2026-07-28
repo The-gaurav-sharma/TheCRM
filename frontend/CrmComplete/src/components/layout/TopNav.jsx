@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Search, Bell, Menu, ChevronDown, User, LogOut, Sparkles } from "lucide-react";
 import {
@@ -14,6 +14,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { cn } from "../../lib/utils";
 import { leadsApi, contactsApi } from "../../lib/services";
+import { checkUpcomingNotifications, formatTimeUntilDue } from "../../lib/notifications";
 
 /* Centered text links — a subset of the primary nav, rendered in a white pill
    exactly like the reference top bar. */
@@ -31,6 +32,21 @@ export function TopNav({ onMenuClick }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState({ leads: [], contacts: [] });
+  const [notifications, setNotifications] = useState([]);
+
+  // Check for notifications every minute
+  useEffect(() => {
+    const checkNotifications = async () => {
+      const upcomingNotifications = await checkUpcomingNotifications();
+      setNotifications(upcomingNotifications);
+    };
+
+    checkNotifications();
+    const interval = setInterval(checkNotifications, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  const hasNotifications = notifications.length > 0;
 
   const handleSearch = async (query) => {
     setSearchQuery(query);
@@ -126,13 +142,33 @@ export function TopNav({ onMenuClick }) {
           trigger={
             <IconButton aria-label="Notifications" className="relative">
               <Bell className="h-4.5 w-4.5" />
-              <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-brand-500 ring-2 ring-surface" />
+              {hasNotifications && (
+                <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-brand-500 ring-2 ring-surface" />
+              )}
             </IconButton>
           }
         >
           <DropdownLabel>Notifications</DropdownLabel>
           <DropdownSeparator />
-          <DropdownItem>No new notifications</DropdownItem>
+          {notifications.length > 0 ? (
+            notifications.map((notif) => (
+              <DropdownItem
+                key={notif.id}
+                onClick={() => navigate("/tasks")}
+                className="text-left"
+              >
+                <div className="flex flex-col gap-1">
+                  <p className="font-medium text-xs">{notif.title}</p>
+                  <p className="text-xs text-ink-soft">{notif.message}</p>
+                  <p className="text-xs text-brand-600">
+                    Due: {formatTimeUntilDue(notif.task.dueDate)}
+                  </p>
+                </div>
+              </DropdownItem>
+            ))
+          ) : (
+            <DropdownItem disabled>No notifications</DropdownItem>
+          )}
         </Dropdown>
 
         <Dropdown
@@ -210,4 +246,5 @@ export function TopNav({ onMenuClick }) {
     </header>
   );
 }
+
 
