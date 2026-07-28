@@ -1,0 +1,20 @@
+# Node modules
+backend/node_modules/
+frontend/CrmComplete/node_modules/
+
+# Environment files
+backend/.env
+frontend/CrmComplete/.env
+
+# Build output
+frontend/CrmComplete/dist/
+
+# Logs
+*.log
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
