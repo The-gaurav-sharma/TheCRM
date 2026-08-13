@@ -1,64 +1,65 @@
-import {GoogleGenAI} from "@google/genai";
-import {ApiError} from "../utils/ApiError.js";
+import Groq from "groq-sdk";
+import { ApiError } from "../utils/ApiError.js";
 
 let client = null;
 
-const getClient = () =>{
-    const apiKey = process.env.GEMINI_API_KEY;
-    if(!apiKey){
+const getClient = () => {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
         throw new ApiError(
             503,
-            "Gemini API Key is not Configured. Add Key to .env File"
+            "Groq API Key is not Configured. Add Key to .env File"
         );
     }
 
-    if(!client) client = new GoogleGenAI ({apiKey});
+    if (!client) client = new Groq({ apiKey });
     return client;
 };
 
-const MODEL = () => process.env.GEMINI_MODEL || "gemini-2.5-flash";
-export const isAIConfigured = () => Boolean(process.env.GEMINI_API_KEY);
+const MODEL = () => process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+export const isAIConfigured = () => Boolean(process.env.GROQ_API_KEY);
 
-const generateJSON = async (prompt, schema) =>{
-    const ai = getClient ();
-    try{
-        const response = await ai.models.generateContent({
+// Groq has no responseSchema like Gemini — we ask for JSON via response_format
+// and describe the required shape inside the prompt itself.
+const generateJSON = async (prompt, schemaDescription) => {
+    const ai = getClient();
+    try {
+        const response = await ai.chat.completions.create({
             model: MODEL(),
-            contents: prompt ,
-            config: {
-                responseMimeType : "application/json",
-                responseSchema : schema,
-                temperature : 0.6
-            },
+            messages: [
+                {
+                    role: "system",
+                    content: `You must respond with valid JSON only, matching this shape:\n${schemaDescription}`,
+                },
+                { role: "user", content: prompt },
+            ],
+            response_format: { type: "json_object" },
+            temperature: 0.6,
         });
-        return JSON.parse(response.text);
-    }
-
-    catch(err) {
-        console.error("Gemini Json Error:", err?.message || err);
-        throw new ApiError(502, "AI Request Failed. Please try again in a moment.")
+        return JSON.parse(response.choices[0].message.content);
+    } catch (err) {
+        console.error("Groq Json Error:", err?.message || err);
+        throw new ApiError(502, "AI Request Failed. Please try again in a moment.");
     }
 };
 
 const generateText = async (prompt, temperature = 0.7) => {
     const ai = getClient();
-    try{
-        const response = await ai.models.generateContent(
-            {
-                model: MODEL(),
-                contents: prompt,
-                config: {temperature},
-            });
+    try {
+        const response = await ai.chat.completions.create({
+            model: MODEL(),
+            messages: [{ role: "user", content: prompt }],
+            temperature,
+        });
 
-            return response.text.trim();
-    }
-
-    catch(err){
-        console.error("Gemini text error", err?.message || err);
+        return response.choices[0].message.content.trim();
+    } catch (err) {
+        console.error("Groq text error", err?.message || err);
         throw new ApiError(502, "AI request failed. Please try again in a moment.");
-    }};
+    }
+};
 
-    export const generateLeadSummary = async (lead) => {
+export const generateLeadSummary = async (lead) => {
     const prompt = `You are an expert B2B sales analyst for a CRM called Atlass CRM.
 Analyse the following sales lead and produce a concise assessment.
 
@@ -73,30 +74,14 @@ Lead details:
 
 Return JSON Only.`;
 
-const schema = {
-    type: "object",
-    properties: {
-        summary: {
-            type: "string",
-            description: "2–3 sentence executive summary of the lead",
-        },
-        riskScore: {
-            type: "integer",
-            description: "Risk of losing this deal, 0 (safe) to 100 (high risk)",
-        },
-        suggestedPriority: {
-            type: "string",
-            enum: ["Low", "Medium", "High"],
-        },
-        nextBestAction: {
-            type: "string",
-            description: "One concrete recommended next step",
-        },
-    },
-    required: ["summary", "riskScore", "suggestedPriority", "nextBestAction"],
-};
+    const schemaDescription = `{
+  "summary": string (2-3 sentence executive summary of the lead),
+  "riskScore": integer (0 = safe, 100 = high risk),
+  "suggestedPriority": "Low" | "Medium" | "High",
+  "nextBestAction": string (one concrete recommended next step)
+}`;
 
-return generateJSON(prompt, schema);
+    return generateJSON(prompt, schemaDescription);
 };
 
 export const generateEmail = async ({ lead, purpose, tone, sender }) => {
@@ -119,18 +104,13 @@ Use line breaks (\\n) in the body. Keep it under 180 words. Sign off as ${
         sender?.name || "the Atlass CRM team"
     }.`;
 
-    const schema = {
-        type: "object",
-        properties: {
-            subject: { type: "string" },
-            body: { type: "string" },
-        },
-        required: ["subject", "body"],
-    };
+    const schemaDescription = `{
+  "subject": string,
+  "body": string
+}`;
 
-    return generateJSON(prompt, schema);
+    return generateJSON(prompt, schemaDescription);
 };
-
 
 export const generateSalesInsights = async (pipelineStats) => {
     const prompt = `You are a revenue-operations advisor. Given this snapshot of a sales pipeline, identify what is working, what is at risk, and concrete actions to improve conversion.
@@ -140,47 +120,14 @@ ${JSON.stringify(pipelineStats, null, 2)}
 
 Return JSON only.`;
 
-    const schema = {
-        type: "object",
-        properties: {
-            headline: {
-                type: "string",
-                description: "One-sentence summary of pipeline health",
-            },
-            insights: {
-                type: "array",
-                description: "3–5 specific, data-driven observations",
-                items: { type: "string" },
-            },
-            recommendations: {
-                type: "array",
-                description: "3–5 prioritized, actionable recommendations",
-                items: { type: "string" },
-            },
-            healthScore: {
-                type: "integer",
-                description: "Overall pipeline health, 0–100",
-            },
-        },
-        required: [
-            "headline",
-            "insights",
-            "recommendations",
-            "healthScore",
-        ],
-    };
+    const schemaDescription = `{
+  "headline": string (one-sentence summary of pipeline health),
+  "insights": string[] (3-5 specific, data-driven observations),
+  "recommendations": string[] (3-5 prioritized, actionable recommendations),
+  "healthScore": integer (0-100)
+}`;
 
-    return generateJSON(prompt, schema);
+    return generateJSON(prompt, schemaDescription);
 };
 
-export {generateText};
- 
-
-
- 
-
-
-
-
-
-
+export { generateText };
