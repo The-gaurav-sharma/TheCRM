@@ -256,7 +256,7 @@ function AiIntegrationCard() {
           <div>
             <CardTitle>AI Integration</CardTitle>
             <CardDescription>
-              Google Gemini powers summaries, email drafts and insights.
+              Groq powers summaries, email drafts and insights.
             </CardDescription>
           </div>
         </div>
@@ -295,11 +295,11 @@ function AiIntegrationCard() {
             {/* Helpful setup note when the key is missing */}
             {!status.configured && (
               <div className="rounded-2xl border border-amber-200/60 bg-amber-50/60 px-4 py-3.5 text-sm text-amber-800">
-                <p className="font-medium mb-1">Connect your Gemini key</p>
+                <p className="font-medium mb-1">Connect your Groq Api key</p>
                 <p className="text-amber-700/80 leading-relaxed">
                   Add{" "}
                   <code className="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-xs text-amber-900">
-                    GEMINI_API_KEY=your_key_here
+                    GROQ_API_KEY=your_key_here
                   </code>{" "}
                   to the backend <code className="font-mono text-xs">.env</code>{" "}
                   file and restart the server to enable AI features.
