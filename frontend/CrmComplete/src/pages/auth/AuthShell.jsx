@@ -64,7 +64,7 @@ export function AuthShell({ children }) {
         </div>
 
         <p className="relative text-xs text-white/40">
-          © {new Date().getFullYear()} Time To Program. All rights reserved.
+          © {new Date().getFullYear()} Atlass Partners. All rights reserved.
         </p>
       </div>
 
