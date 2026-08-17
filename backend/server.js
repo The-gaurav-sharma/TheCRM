@@ -13,6 +13,7 @@ import noteRoutes from "./routes/note.routes.js"
 import taskRoutes from "./routes/task.route.js"
 import aiRoutes from "./routes/ai.routes.js"
 import analyticsRoutes from "./routes/analytics.routes.js"
+import organizationRoutes from "./routes/organization.routes.js";
 
 
 
@@ -49,6 +50,7 @@ app.use("/api/leads", leadRoutes);
 app.use("/api/contacts", contactRoutes);
 app.use("/api/notes", noteRoutes);
 app.use("/api/tasks", taskRoutes);
+app.use("/api/organizations", organizationRoutes);
 
 app.use("/api/ai", aiRoutes);
 

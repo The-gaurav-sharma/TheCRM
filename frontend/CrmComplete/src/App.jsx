@@ -11,6 +11,7 @@ import Pipeline from "./pages/Pipeline";
 import Notes from "./pages/Notes";
 import Tasks from "./pages/Tasks";
 import Settings from "./pages/Settings";
+import Organizations from "./pages/Organizations";
 
 /* Central route table. Auth routes are public; everything else is wrapped in
    the authenticated AppLayout behind <ProtectedRoute>. */
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="/notes" element={<Notes />} />
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/organizations" element={<Organizations />} />
       </Route>
 
       {/* Fallback */}

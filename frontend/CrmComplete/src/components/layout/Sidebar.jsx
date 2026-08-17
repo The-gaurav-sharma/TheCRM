@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutGrid,
   Users,
+  Building2,
   Contact2,
   KanbanSquare,
   StickyNote,
@@ -17,6 +18,7 @@ import { useAuth } from "../../context/AuthContext";
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutGrid, end: true },
   { to: "/leads", label: "Leads", icon: Users },
+  { to: "/organizations", label: "Organizations", icon: Building2 },
   { to: "/contacts", label: "Contacts", icon: Contact2 },
   { to: "/pipeline", label: "Pipeline", icon: KanbanSquare },
   { to: "/notes", label: "Notes", icon: StickyNote },

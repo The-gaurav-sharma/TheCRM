@@ -28,6 +28,7 @@ import {
   Input,
   Textarea,
   Field,
+  Select,
   Badge,
   Avatar,
   Dialog,
@@ -36,8 +37,7 @@ import {
   DropdownItem,
   Spinner,
 } from "../components/ui";
-import { contactsApi } from "../lib/services";
-import { relative, shortDate } from "../lib/format";
+import { contactsApi, organizationsApi } from "../lib/services";import { relative, shortDate } from "../lib/format";
 import { cn } from "../lib/utils";
 
 /* ─── useFlip ─────────────────────────────────────────────────────────────────
@@ -96,6 +96,7 @@ function useFlip(dep) {
 export default function Contacts() {
   // null = loading, [] = empty, [...] = loaded
   const [contacts, setContacts] = useState(null);
+  const [organizations, setOrganizations] = useState([]);
   const [filters, setFilters] = useState({ search: "", tag: "" });
   const [view, setView] = useState("grid"); // "grid" | "table"
 
@@ -115,6 +116,17 @@ export default function Contacts() {
       .catch(() => setContacts([]));
   };
   useEffect(load, []);
+
+  useEffect(() => {
+  organizationsApi
+    .list()
+    .then((res) => {
+      setOrganizations(res.organizations || []);
+    })
+    .catch(() => {
+      setOrganizations([]);
+    });
+}, []);
 
   // ── Derived data ────────────────────────────────────────────────────
 
@@ -409,11 +421,12 @@ export default function Contacts() {
 
       {/* ── Add / Edit Dialog ── */}
       <ContactFormDialog
-        open={formOpen}
-        contact={editing}
-        onClose={() => setFormOpen(false)}
-        onSaved={handleSaved}
-      />
+  open={formOpen}
+  contact={editing}
+  organizations={organizations}
+  onClose={() => setFormOpen(false)}
+  onSaved={handleSaved}
+/>
 
       {/* ── Delete confirmation ── */}
       <ConfirmDialog
@@ -524,6 +537,7 @@ function ContactCard({
   onEdit,
   onDelete,
 }) {
+
   return (
     <div
       data-flip-id={flipId}
@@ -567,19 +581,35 @@ function ContactCard({
       </div>
 
       {/* Avatar + identity */}
-      <div className="flex items-start gap-3 pr-8">
-        <Avatar name={contact.name} size="md" />
-        <div className="min-w-0">
-          <p className="font-semibold text-ink leading-tight truncate">
-            {contact.name}
-          </p>
-          {(contact.title || contact.company) && (
-            <p className="mt-0.5 text-sm text-ink-soft truncate">
-              {[contact.title, contact.company].filter(Boolean).join(" · ")}
-            </p>
-          )}
-        </div>
-      </div>
+    <div className="flex items-start gap-3 pr-8">
+  <Avatar
+    name={`${contact.firstName || ""} ${contact.lastName || ""}`.trim()}
+    size="md"
+  />
+
+  <div className="min-w-0">
+   <p className="font-semibold text-ink leading-tight truncate">
+  {`${contact.firstName || ""} ${contact.lastName || ""}`.trim()}
+</p>
+
+{contact.entityId && (
+  <p className="text-xs text-ink-soft mt-0.5">
+    {contact.entityId}
+  </p>
+)}
+
+   {(contact.jobTitle || contact.organization) && (
+  <p className="mt-0.5 text-sm text-ink-soft truncate">
+    {[
+      contact.jobTitle,
+      contact.organization?.name,
+    ]
+      .filter(Boolean)
+      .join(" · ")}
+  </p>
+)}
+  </div>
+</div>
 
       {/* Tags */}
       {contact.tags?.length > 0 && (
@@ -652,7 +682,7 @@ function ContactTableRow({
 
       {/* Title */}
       <td className="px-6 py-3.5 text-sm text-ink-soft">
-        {contact.title || "—"}
+      {contact.jobTitle || "—"}
       </td>
 
       {/* Tags */}
@@ -741,107 +771,165 @@ function ContactDrawer({ open, contact, onClose, onEdit, onDelete }) {
   if (!contact) return null;
 
   return (
-    <Drawer open={open} onClose={onClose} title="Contact details">
-      <div className="space-y-6">
-        {/* Identity hero */}
-        <div className="flex items-center gap-4">
-          <Avatar name={contact.name} size="lg" />
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl font-semibold text-ink">{contact.name}</h2>
-              {contact.favorite && (
-                <Star className="h-4 w-4 fill-amber-400 text-amber-400 shrink-0" />
-              )}
-            </div>
-            {(contact.title || contact.company) && (
-              <p className="text-sm text-ink-soft mt-0.5">
-                {[contact.title, contact.company].filter(Boolean).join(" · ")}
-              </p>
-            )}
-            {contact.favorite && (
-              <Badge className="mt-1.5 bg-amber-50 text-amber-700 text-[11px]">
-                Favorite
-              </Badge>
-            )}
-          </div>
-        </div>
+   <Drawer open={open} onClose={onClose} title="Contact details">
+  <div className="space-y-6">
 
-        {/* Contact fields */}
-        <div className="rounded-2xl border border-line divide-y divide-line">
-          {contact.email && (
-            <DrawerRow icon={<Mail className="h-4 w-4" />} label="Email">
-              <a
-                href={`mailto:${contact.email}`}
-                className="text-brand-700 hover:underline"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {contact.email}
-              </a>
-            </DrawerRow>
-          )}
-          {contact.phone && (
-            <DrawerRow icon={<Phone className="h-4 w-4" />} label="Phone">
-              <a
-                href={`tel:${contact.phone}`}
-                className="text-brand-700 hover:underline"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {contact.phone}
-              </a>
-            </DrawerRow>
-          )}
-          {contact.company && (
-            <DrawerRow icon={<Building2 className="h-4 w-4" />} label="Company">
-              <span className="text-ink">{contact.company}</span>
-            </DrawerRow>
+    {/* Identity hero */}
+    <div className="flex items-center gap-4">
+      <Avatar
+        name={`${contact.firstName || ""} ${contact.lastName || ""}`.trim()}
+        size="lg"
+      />
+
+      <div>
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-ink">
+            {`${contact.firstName || ""} ${contact.lastName || ""}`.trim()}
+          </h2>
+
+          {contact.favorite && (
+            <Star className="h-4 w-4 fill-amber-400 text-amber-400 shrink-0" />
           )}
         </div>
 
-        {/* Tags */}
-        {contact.tags?.length > 0 && (
-          <div>
-            <div className="flex items-center gap-1.5 text-xs font-medium text-ink-soft uppercase tracking-wide mb-2">
-              <Tag className="h-3.5 w-3.5" /> Tags
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {contact.tags.map((tag) => (
-                <Badge key={tag} className="bg-brand-50 text-brand-700">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </div>
+            {contact.entityId && (
+  <p className="text-xs text-ink-soft mt-1">
+    {contact.entityId}
+  </p>
+)}
+
+       {(contact.jobTitle || contact.organization) && (
+  <p className="text-sm text-ink-soft mt-0.5">
+    {[
+      contact.jobTitle,
+      contact.organization?.name,
+    ]
+      .filter(Boolean)
+      .join(" · ")}
+  </p>
+)}
+
+        {contact.favorite && (
+          <Badge className="mt-1.5 bg-amber-50 text-amber-700 text-[11px]">
+            Favorite
+          </Badge>
         )}
+      </div>
+    </div>
 
-        {/* Notes */}
-        {contact.notes && (
-          <div>
-            <p className="text-xs font-medium text-ink-soft uppercase tracking-wide mb-2">
-              Notes
-            </p>
-            <p className="text-sm text-ink leading-relaxed whitespace-pre-line rounded-xl bg-surface-muted px-4 py-3">
-              {contact.notes}
-            </p>
-          </div>
-        )}
+    {/* Contact fields */}
+    <div className="rounded-2xl border border-line divide-y divide-line">
 
-        {/* Meta */}
-        <p className="text-xs text-ink-soft">
-          Added {shortDate(contact.createdAt)}{" "}
-          <span className="opacity-60">({relative(contact.createdAt)})</span>
-        </p>
+      {/* Email */}
+      {contact.email && (
+        <DrawerRow
+          icon={<Mail className="h-4 w-4" />}
+          label="Email"
+        >
+          <a
+            href={`mailto:${contact.email}`}
+            className="text-brand-700 hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {contact.email}
+          </a>
+        </DrawerRow>
+      )}
 
-        {/* Action buttons */}
-        <div className="flex gap-3 pt-2 border-t border-line">
-          <Button variant="outline" className="flex-1" onClick={onEdit}>
-            <Pencil className="h-4 w-4" /> Edit
-          </Button>
-          <Button variant="danger" size="sm" onClick={onDelete}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
+      {/* Phone */}
+      {contact.mobile && (
+  <DrawerRow
+    icon={<Phone className="h-4 w-4" />}
+    label="Mobile"
+  >
+    <a
+      href={`tel:${contact.mobile}`}
+      className="text-brand-700 hover:underline"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {contact.mobile}
+    </a>
+  </DrawerRow>
+)}
+
+      {/* Organization */}
+      {contact.organization && (
+        <DrawerRow
+          icon={<Building2 className="h-4 w-4" />}
+          label="Organization"
+        >
+          <span className="text-ink">
+            {contact.organization?.name || "Unknown organization"}
+          </span>
+        </DrawerRow>
+      )}
+
+    </div>
+
+    {/* Tags */}
+    {contact.tags?.length > 0 && (
+      <div>
+        <div className="flex items-center gap-1.5 text-xs font-medium text-ink-soft uppercase tracking-wide mb-2">
+          <Tag className="h-3.5 w-3.5" />
+          Tags
+        </div>
+
+        <div className="flex flex-wrap gap-1.5">
+          {contact.tags.map((tag) => (
+            <Badge
+              key={tag}
+              className="bg-brand-50 text-brand-700"
+            >
+              {tag}
+            </Badge>
+          ))}
         </div>
       </div>
-    </Drawer>
+    )}
+
+    {/* Notes */}
+    {contact.notes && (
+      <div>
+        <p className="text-xs font-medium text-ink-soft uppercase tracking-wide mb-2">
+          Notes
+        </p>
+
+        <p className="text-sm text-ink leading-relaxed whitespace-pre-line rounded-xl bg-surface-muted px-4 py-3">
+          {contact.notes}
+        </p>
+      </div>
+    )}
+
+    {/* Meta */}
+    <p className="text-xs text-ink-soft">
+      Added {shortDate(contact.createdAt)}{" "}
+      <span className="opacity-60">
+        ({relative(contact.createdAt)})
+      </span>
+    </p>
+
+    {/* Action buttons */}
+    <div className="flex gap-3 pt-2 border-t border-line">
+      <Button
+        variant="outline"
+        className="flex-1"
+        onClick={onEdit}
+      >
+        <Pencil className="h-4 w-4" />
+        Edit
+      </Button>
+
+      <Button
+        variant="danger"
+        size="sm"
+        onClick={onDelete}
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
+
+  </div>
+</Drawer>
   );
 }
 
@@ -860,7 +948,13 @@ function DrawerRow({ icon, label, children }) {
    Add / Edit dialog backed by react-hook-form.
    Tags are entered as a comma-separated string and split on submit.
    ──────────────────────────────────────────────────────────────────────────── */
-function ContactFormDialog({ open, contact, onClose, onSaved }) {
+function ContactFormDialog({
+  open,
+  contact,
+  organizations,
+  onClose,
+  onSaved,
+})  {
   const isEdit = Boolean(contact);
 
   const {
@@ -871,33 +965,38 @@ function ContactFormDialog({ open, contact, onClose, onSaved }) {
   } = useForm();
 
   // Reset form defaults when dialog opens or the editing target changes
-  useEffect(() => {
-    if (open) {
-      reset(
-        contact
-          ? {
-              name: contact.name || "",
-              title: contact.title || "",
-              company: contact.company || "",
-              email: contact.email || "",
-              phone: contact.phone || "",
-              tags: (contact.tags || []).join(", "),
-              notes: contact.notes || "",
-              favorite: contact.favorite || false,
-            }
-          : {
-              name: "",
-              title: "",
-              company: "",
-              email: "",
-              phone: "",
-              tags: "",
-              notes: "",
-              favorite: false,
-            }
-      );
-    }
-  }, [open, contact, reset]);
+ useEffect(() => {
+  if (open) {
+    reset(
+  contact
+    ? {
+        firstName: contact.firstName || "",
+        lastName: contact.lastName || "",
+        jobTitle: contact.jobTitle || "",
+        organization:
+          contact.organization?._id ||
+          contact.organization ||
+          "",
+        email: contact.email || "",
+        mobile: contact.mobile || "",
+        tags: (contact.tags || []).join(", "),
+        notes: contact.notes || "",
+        favorite: contact.favorite || false,
+      }
+    : {
+        firstName: "",
+        lastName: "",
+        jobTitle: "",
+        organization: "",
+        email: "",
+        mobile: "",
+        tags: "",
+        notes: "",
+        favorite: false,
+      }
+);
+  }
+}, [open, contact, reset]);
 
   const onSubmit = async (values) => {
     // Parse comma-separated tags into a clean array
@@ -938,22 +1037,58 @@ function ContactFormDialog({ open, contact, onClose, onSaved }) {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
         {/* Name (required) */}
-        <Field label="Full name" error={errors.name?.message}>
-          <Input
-            {...register("name", { required: "Name is required" })}
-            placeholder="Jane Doe"
-            autoFocus
-          />
-        </Field>
+        <div className="grid grid-cols-2 gap-3">
+  <Field
+    label="First name"
+    error={errors.firstName?.message}
+  >
+    <Input
+      {...register("firstName", {
+        required: "First name is required",
+      })}
+      placeholder="Jane"
+    />
+  </Field>
+
+  <Field
+    label="Last name"
+    error={errors.lastName?.message}
+  >
+    <Input
+      {...register("lastName", {
+        required: "Last name is required",
+      })}
+      placeholder="Doe"
+    />
+  </Field>
+</div>
 
         {/* Title + Company in a two-column row */}
         <div className="grid grid-cols-2 gap-3">
           <Field label="Title">
-            <Input {...register("title")} placeholder="Head of Design" />
+            <Input {...register("jobTitle")} placeholder="Head of Design" />
           </Field>
-          <Field label="Company">
-            <Input {...register("company")} placeholder="Acme Inc." />
-          </Field>
+
+         <Field
+  label="Organization"
+  error={errors.organization?.message}
+>
+  <Select
+    {...register("organization", {
+      required: "Organization is required",
+    })}
+  >
+    <option value="">Select organization</option>
+
+    {organizations.map((org) => (
+      <option key={org._id} value={org._id}>
+        {org.name} ({org.entityId})
+      </option>
+    ))}
+  </Select>
+</Field>
+
+
         </div>
 
         {/* Email + Phone */}
@@ -965,13 +1100,13 @@ function ContactFormDialog({ open, contact, onClose, onSaved }) {
               placeholder="jane@acme.com"
             />
           </Field>
-          <Field label="Phone">
-            <Input
-              {...register("phone")}
-              type="tel"
-              placeholder="+1 555 000 0000"
-            />
-          </Field>
+          <Field label="Mobile">
+  <Input
+    {...register("mobile")}
+    type="tel"
+    placeholder="+91 98765 43210"
+  />
+</Field>
         </div>
 
         {/* Tags — comma-separated */}

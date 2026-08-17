@@ -31,6 +31,15 @@ export const contactsApi = {
  
 };
 
+/* ── Organizations ─────────────────────────────────────────────────── */
+export const organizationsApi = {
+  list: (params) => api.get("/organizations", { params }),
+  get: (id) => api.get(`/organizations/${id}`),
+  create: (data) => api.post("/organizations", data),
+  update: (id, data) => api.put(`/organizations/${id}`, data),
+  remove: (id) => api.delete(`/organizations/${id}`),
+};
+
 /* ── Notes ──────────────────────────────────────────────────────────── */
 export const notesApi = {
 
