@@ -2,6 +2,7 @@ import { Organization } from "../models/Organization.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { generateEntityId } from "../utils/generateEntityId.js";
+import { Contact } from "../models/Contact.js";
 
 
 export const getOrganizations = asyncHandler(async (req, res) => {
@@ -40,6 +41,34 @@ export const getOrganizations = asyncHandler(async (req, res) => {
         organizations
     });
 });
+
+export const getOrganizationStakeholders = asyncHandler(
+  async (req, res) => {
+    // First make sure the organization belongs to the logged-in user
+    const organization = await Organization.findOne({
+      _id: req.params.id,
+      owner: req.user._id,
+    });
+
+    if (!organization) {
+      throw new ApiError(404, "Organization Not Found");
+    }
+
+    const stakeholders = await Contact.find({
+      organization: organization._id,
+      owner: req.user._id,
+    }).sort({
+      firstName: 1,
+      lastName: 1,
+    });
+
+    res.json({
+      success: true,
+      count: stakeholders.length,
+      stakeholders,
+    });
+  }
+);
 
 
 export const getOrganization = asyncHandler(async (req, res) => {

@@ -22,13 +22,13 @@ export const leadsApi = {
 
 /* ── Contacts ───────────────────────────────────────────────────────── */
 export const contactsApi = {
-  
   list: (params) => api.get("/contacts", { params }),
   get: (id) => api.get(`/contacts/${id}`),
   create: (data) => api.post("/contacts", data),
   update: (id, data) => api.put(`/contacts/${id}`, data),
   remove: (id) => api.delete(`/contacts/${id}`),
- 
+  unassigned: () => api.get("/contacts/unassigned"),
+  
 };
 
 /* ── Organizations ─────────────────────────────────────────────────── */
@@ -38,6 +38,9 @@ export const organizationsApi = {
   create: (data) => api.post("/organizations", data),
   update: (id, data) => api.put(`/organizations/${id}`, data),
   remove: (id) => api.delete(`/organizations/${id}`),
+
+  stakeholders: (id) =>
+    api.get(`/organizations/${id}/stakeholders`),
 };
 
 /* ── Notes ──────────────────────────────────────────────────────────── */
@@ -72,7 +75,6 @@ export const aiApi = {
 /* ── Analytics (computed from the in-memory leads, so the dashboard always
       matches the Leads/Pipeline pages) ──────────────────────────────────── */
 export const analyticsApi = {
- 
   overview: () => api.get("/analytics/overview"),
-  
-}
+  unassignedContacts: () => contactsApi.unassigned(),
+};

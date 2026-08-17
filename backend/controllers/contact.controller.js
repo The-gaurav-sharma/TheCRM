@@ -105,3 +105,20 @@ export const deleteContact = asyncHandler(async (req, res) => {
     message: "Contact Deleted",
   });
 });
+
+
+export const getUnassignedContacts = asyncHandler(async (req, res) => {
+  const contacts = await Contact.find({
+    owner: req.user._id,
+    $or: [
+      { organization: { $exists: false } },
+      { organization: null },
+    ],
+  }).sort({ createdAt: -1 });
+
+  res.json({
+    success: true,
+    count: contacts.length,
+    contacts,
+  });
+});

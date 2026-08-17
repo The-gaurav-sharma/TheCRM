@@ -5,7 +5,8 @@ import {
     getOrganization,
     createOrganization,
     updateOrganization,
-    deleteOrganization
+    deleteOrganization,
+    getOrganizationStakeholders
 } from "../controllers/organization.controller.js";
 
 import { protect } from "../middleware/auth.middleware.js";
@@ -18,6 +19,12 @@ router
     .route("/")
     .get(getOrganizations)
     .post(createOrganization);
+
+    router.get(
+  "/:id/stakeholders",
+  protect,
+  getOrganizationStakeholders
+);
 
 router
     .route("/:id")
